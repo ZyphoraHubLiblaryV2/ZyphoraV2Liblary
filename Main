@@ -1,58 +1,52 @@
 local Players = game:GetService("Players")
-local player = Players.LocalPlayer
 
-local gui = Instance.new("ScreenGui")
-gui.Name = "WarningUI"
-gui.ResetOnSpawn = false
-gui.Parent = player:WaitForChild("PlayerGui")
+local Player = Players.LocalPlayer
 
-local Frame = Instance.new("Frame")
-Frame.Size = UDim2.new(0, 320, 0, 170)
-Frame.Position = UDim2.new(0.5, -160, 0.5, -85)
-Frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-Frame.BorderSizePixel = 0
-Frame.Parent = gui
+local Gui = Instance.new("ScreenGui")
+Gui.Name = "WarningUI"
+Gui.IgnoreGuiInset = true
+Gui.ResetOnSpawn = false
+Gui.Parent = Player:WaitForChild("PlayerGui")
 
-local Corner = Instance.new("UICorner")
-Corner.CornerRadius = UDim.new(0, 8)
-Corner.Parent = Frame
+local BG = Instance.new("Frame")
+BG.Size = UDim2.fromScale(1,1)
+BG.BackgroundColor3 = Color3.fromRGB(15,15,15)
+BG.BackgroundTransparency = 0.15
+BG.Parent = Gui
 
 local Title = Instance.new("TextLabel")
-Title.Size = UDim2.new(1, 0, 0, 35)
+Title.Size = UDim2.new(1,0,0,70)
+Title.Position = UDim2.new(0,0,0.15,0)
 Title.BackgroundTransparency = 1
-Title.Text = "⚠️ Warning"
+Title.Text = "⚠ WARNING ⚠"
 Title.Font = Enum.Font.GothamBold
-Title.TextSize = 18
-Title.TextColor3 = Color3.new(1, 1, 1)
-Title.Parent = Frame
+Title.TextScaled = true
+Title.TextColor3 = Color3.fromRGB(255,80,80)
+Title.Parent = BG
 
-local Message = Instance.new("TextLabel")
-Message.Size = UDim2.new(1, -20, 0, 70)
-Message.Position = UDim2.new(0, 10, 0, 40)
-Message.BackgroundTransparency = 1
-Message.TextWrapped = true
-Message.Text = "SC Tutup 3 Hari"
-Message.Font = Enum.Font.Gotham
-Message.TextSize = 14
-Message.TextColor3 = Color3.fromRGB(220, 220, 220)
-Message.Parent = Frame
+local Desc = Instance.new("TextLabel")
+Desc.Size = UDim2.new(0.7,0,0.2,0)
+Desc.Position = UDim2.new(0.15,0,0.32,0)
+Desc.BackgroundTransparency = 1
+Desc.TextWrapped = true
+Desc.TextScaled = true
+Desc.Font = Enum.Font.Gotham
+Desc.TextColor3 = Color3.new(1,1,1)
+Desc.Text = "Zyphora Security\nSc Tutup 3 Hari\nIno Lebih Lanjut\nhttps://whatsapp.com/channel/0029Vb8PZy4HwXbBtQmAJ73m"
+Desc.Parent = BG
 
-local Cancel = Instance.new("TextButton")
-Cancel.Size = UDim2.new(0, 140, 0, 35)
-Cancel.Position = UDim2.new(0.5, 0, 1, -45)
-Cancel.AnchorPoint = Vector2.new(0.5, 0)
-Cancel.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-Cancel.BorderSizePixel = 0
-Cancel.Text = "Batal"
-Cancel.Font = Enum.Font.GothamBold
-Cancel.TextSize = 14
-Cancel.TextColor3 = Color3.new(1, 1, 1)
-Cancel.Parent = Frame
+local Close = Instance.new("TextButton")
+Close.Size = UDim2.new(0,180,0,50)
+Close.Position = UDim2.new(0.5,-90,0.72,0)
+Close.BackgroundColor3 = Color3.fromRGB(220,60,60)
+Close.Text = "Close"
+Close.Font = Enum.Font.GothamBold
+Close.TextColor3 = Color3.new(1,1,1)
+Close.TextScaled = true
+Close.Parent = BG
 
-local CancelCorner = Instance.new("UICorner")
-CancelCorner.CornerRadius = UDim.new(0, 6)
-CancelCorner.Parent = Cancel
+Instance.new("UICorner", Close).CornerRadius = UDim.new(0,10)
 
-Cancel.MouseButton1Click:Connect(function()
-    gui:Destroy()
+Close.MouseButton1Click:Connect(function()
+    Gui:Destroy()
 end)
