@@ -11,7 +11,7 @@
 -- ║  VERSION  : V3.0                                ║
 -- ║  STATUS   : PRIVATE.                             ║
 -- ║  OWNER    : Rexz                             ║
--- ║  BUILD    : FREE                             ║
+-- ║  BUILD    : PREMIUM                             ║
 -- ╚══════════════════════════════════════════════════╝
 
 --[[
@@ -684,6 +684,7 @@ end)
 })
 Corner(BgImage, 12)
 self._uiRefs.CustomBackground = BgImage
+self._uiRefs._bgVisibleState = true   -- ✅ TAMBAHAN: state awal sesuai Visible default
 
     -- Gradient overlay (Merah -> Biru)
     local BgGradientOverlay = New("Frame", {
@@ -758,12 +759,15 @@ self._uiRefs.CustomBackground = BgImage
     -- Icon
     local ToggleIcon = New("ImageLabel", {
     Name = "ToggleIcon",
-    Size = UDim2.fromOffset(34,34),
+    Size = UDim2.fromScale(1, 1),
+    Position = UDim2.fromScale(0, 0),
     BackgroundTransparency = 1,
     Image = ResolveIcon(70682112796440) or "",
     ImageColor3 = T.AccentBright,
+    ScaleType = Enum.ScaleType.Stretch, -- atau Fit
     ZIndex = 13,
     Parent = ToggleBtn,
+})
 
     AnchorPoint = Vector2.new(0.5,0.5),
     Position = UDim2.fromScale(0.5,0.5),
@@ -1023,10 +1027,10 @@ local function MinimizeWindow()
 
     local show = not self.Minimized
 
-    -- ✅ Sembunyikan/tampilkan custom background & gradient
-    if self._uiRefs.CustomBackground then
-        self._uiRefs.CustomBackground.Visible = show
-    end
+ -- ✅ Sembunyikan/tampilkan custom background & gradient (hormati state user)
+if self._uiRefs.CustomBackground then
+    self._uiRefs.CustomBackground.Visible = show and (self._uiRefs._bgVisibleState ~= false)
+end
     if self._uiRefs.CustomBackgroundGradient then
         local gradVisible = self._uiRefs.CustomBackgroundGradient.Visible
         self._uiRefs.CustomBackgroundGradient.Visible = show and gradVisible
@@ -1116,9 +1120,9 @@ local function ToggleHideWindow()
 
         -- ✅ Tampilkan kembali setelah animasi selesai
         task.delay(0.15, function()
-            if self._uiRefs.CustomBackground then
-                self._uiRefs.CustomBackground.Visible = true
-            end
+    if self._uiRefs.CustomBackground then
+        self._uiRefs.CustomBackground.Visible = (self._uiRefs._bgVisibleState ~= false)
+    end
             if self._uiRefs.CustomBackgroundGradient then
                 -- Kembalikan ke state sebelumnya (jika gradient aktif)
                 local gradToggle = self._uiRefs._gradToggleState
@@ -2007,21 +2011,23 @@ New("TextLabel", {
         self.SettingsRefs = { AccentBox = accentInput.Box, BackgroundBox = bgInput.Box }
 
         SettingsTab:AddSectionDivider("Custom Background")
-        local bgLinkInput = SettingsTab:AddInput("Link/ID Background (semua link didukung)", 10723344432, "", function() end)
+        local bgLinkInput = SettingsTab:AddInput("Link/ID Background", 10723344432, "", function() end)
         SettingsTab:AddButton("Terapkan Background", 10723344432, function()
-            local link = bgLinkInput:GetValue()
-            local img = ParseImageLink(link)
-            if not img or img == "" then
-                if self._uiRefs.CustomBackground then self._uiRefs.CustomBackground.Visible = false end
-                self:Notify("Background", "Background custom dihapus.", "info")
-                return
-            end
-            if self._uiRefs.CustomBackground then
-                self._uiRefs.CustomBackground.Image = img
-                self._uiRefs.CustomBackground.Visible = true
-            end
-            self:Notify("Background", "Background custom diterapkan.", "success")
-        end)
+    local link = bgLinkInput:GetValue()
+    local img = ParseImageLink(link)
+    if not img or img == "" then
+        if self._uiRefs.CustomBackground then self._uiRefs.CustomBackground.Visible = false end
+        self._uiRefs._bgVisibleState = false
+        self:Notify("Background", "Background custom dihapus.", "info")
+        return
+    end
+    if self._uiRefs.CustomBackground then
+        self._uiRefs.CustomBackground.Image = img
+        self._uiRefs.CustomBackground.Visible = true
+    end
+    self._uiRefs._bgVisibleState = true
+    self:Notify("Background", "Background custom diterapkan.", "success")
+end)
 
         SettingsTab:AddButton("Reset Default", 10723344432, function()
             ApplyPreset("Default"); presetDrop:SetValue("Default", false)
@@ -2035,6 +2041,7 @@ New("TextLabel", {
     if self._uiRefs.CustomBackground then self._uiRefs.CustomBackground.Visible = false end
     if self._uiRefs.CustomBackgroundGradient then self._uiRefs.CustomBackgroundGradient.Visible = false end
     if gradToggle and gradToggle.SetValue then gradToggle:SetValue(false) end
+    self._uiRefs._bgVisibleState = false
     self:Notify("Background", "Background direset.", "success")
 end)
 
