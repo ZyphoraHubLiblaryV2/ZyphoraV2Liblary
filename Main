@@ -625,18 +625,14 @@ local ResizeHandle = New("TextButton", {
     Size = UDim2.new(0, 16, 0, 16),
     Position = UDim2.new(1, -4, 1, -4),
     AnchorPoint = Vector2.new(1, 1),
-    BackgroundColor3 = T.Surface,
     BackgroundTransparency = 1,
     Text = "⤡",
-    TextColor3 = T.AccentBright,
-    TextSize = 11,
+    TextTransparency = 1,
+    BorderSizePixel = 0,
     ZIndex = 10,
     Active = true,
-    BorderSizePixel = 0,
     Parent = MainFrame,
 })
-Corner(ResizeHandle, 50)
-Stroke(ResizeHandle, T.Accent, 1.5, 0.5)
 
 local resizing = false
 local resizeStart = nil
