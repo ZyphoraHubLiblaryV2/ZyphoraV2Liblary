@@ -680,7 +680,6 @@ end)
 })
 Corner(BgImage, 12)
 self._uiRefs.CustomBackground = BgImage
-self._uiRefs._bgVisibleState = true   -- ✅ TAMBAHAN: state awal sesuai Visible default
 
     -- Gradient overlay (Merah -> Biru)
     local BgGradientOverlay = New("Frame", {
@@ -1023,9 +1022,9 @@ local function MinimizeWindow()
 
     local show = not self.Minimized
 
- -- ✅ Sembunyikan/tampilkan custom background & gradient (hormati state user)
+ -- ✅ Sembunyikan/tampilkan custom background & gradient
 if self._uiRefs.CustomBackground then
-    self._uiRefs.CustomBackground.Visible = show and (self._uiRefs._bgVisibleState ~= false)
+    self._uiRefs.CustomBackground.Visible = show
 end
     if self._uiRefs.CustomBackgroundGradient then
         local gradVisible = self._uiRefs.CustomBackgroundGradient.Visible
@@ -1117,7 +1116,7 @@ local function ToggleHideWindow()
         -- ✅ Tampilkan kembali setelah animasi selesai
         task.delay(0.15, function()
     if self._uiRefs.CustomBackground then
-        self._uiRefs.CustomBackground.Visible = (self._uiRefs._bgVisibleState ~= false)
+        self._uiRefs.CustomBackground.Visible = true
     end
             if self._uiRefs.CustomBackgroundGradient then
                 -- Kembalikan ke state sebelumnya (jika gradient aktif)
@@ -2013,7 +2012,6 @@ New("TextLabel", {
     local img = ParseImageLink(link)
     if not img or img == "" then
         if self._uiRefs.CustomBackground then self._uiRefs.CustomBackground.Visible = false end
-        self._uiRefs._bgVisibleState = false
         self:Notify("Background", "Background custom dihapus.", "info")
         return
     end
@@ -2021,7 +2019,6 @@ New("TextLabel", {
         self._uiRefs.CustomBackground.Image = img
         self._uiRefs.CustomBackground.Visible = true
     end
-    self._uiRefs._bgVisibleState = true
     self:Notify("Background", "Background custom diterapkan.", "success")
 end)
 
@@ -2037,7 +2034,6 @@ end)
     if self._uiRefs.CustomBackground then self._uiRefs.CustomBackground.Visible = false end
     if self._uiRefs.CustomBackgroundGradient then self._uiRefs.CustomBackgroundGradient.Visible = false end
     if gradToggle and gradToggle.SetValue then gradToggle:SetValue(false) end
-    self._uiRefs._bgVisibleState = false
     self:Notify("Background", "Background direset.", "success")
 end)
 
