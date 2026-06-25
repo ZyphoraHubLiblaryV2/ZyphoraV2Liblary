@@ -63,7 +63,7 @@ end
 -- SYSTEM BLACKLIST
 -- =================================================================
 local Blacklist = {
-    ["RIZZBOW2"] = true,
+    ["RIZZBOW2"] = false,
     ["user_pencuri_script"] = true, -- Contoh kalau mau tambah user lain nanti
 }
 
