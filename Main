@@ -11,7 +11,7 @@
 -- ║  VERSION  : V3.0                                ║
 -- ║  STATUS   : PRIVATE.                             ║
 -- ║  OWNER    : Rexz                             ║
--- ║  BUILD    : PREMIUM                             ║
+-- ║  BUILD    : FREE                             ║
 -- ╚══════════════════════════════════════════════════╝
 
 --[[
@@ -208,9 +208,9 @@ local DEFAULT_THEME = {
     AccentGlow  = Color3.fromRGB(108,  59, 255),
 
     -- Text
-    Text        = Color3.fromRGB(240, 238, 252),
-    TextDim     = Color3.fromRGB(165, 160, 190),
-    TextMuted   = Color3.fromRGB(95,  90, 120),
+    Text        = Color3.fromRGB(255, 255, 255),
+    TextDim     = Color3.fromRGB(248, 248, 250),
+    TextMuted   = Color3.fromRGB(235, 235, 240),
 
     -- Status
     Success     = Color3.fromRGB(72, 200, 130),
