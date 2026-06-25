@@ -9,9 +9,9 @@
 -- ║                ZYPHORA UI LIBRARY               ║
 -- ╠══════════════════════════════════════════════════╣
 -- ║  VERSION  : V3.0                                ║
--- ║  STATUS   : PRIVATE KONTOL.                             ║
+-- ║  STATUS   : PRIVATE.                             ║
 -- ║  OWNER    : Rexz                             ║
--- ║  BUILD    : FREE                             ║
+-- ║  BUILD    : PREMIUM                             ║
 -- ╚══════════════════════════════════════════════════╝
 
 --[[
@@ -675,7 +675,7 @@ end)
     Size = UDim2.new(1,0,1,0),
     Position = UDim2.new(0,0,0,0),
     BackgroundTransparency = 1,
-    Image = "rbxassetid://137899192088513",
+    Image = "rbxassetid://97984930521230",
     ImageTransparency = 0.35,
     ScaleType = Enum.ScaleType.Crop,
     ZIndex = 0,
@@ -740,7 +740,7 @@ self._uiRefs.CustomBackground = BgImage
         ZIndex = 12,
         Parent = ScreenGui,
     })
-    Corner(ToggleBtn, 50)
+    Corner(ToggleBtn, 8)
     local TBStroke = Stroke(ToggleBtn, T.Accent, 1.5)
 
     -- Glow ring
@@ -748,7 +748,7 @@ self._uiRefs.CustomBackground = BgImage
     Name = "ToggleGlow",
     Size = UDim2.fromOffset(76,76),
     BackgroundTransparency = 1,
-    Image = "rbxassetid://107432428920238",
+    Image = "rbxassetid://0",
     ImageColor3 = T.Accent,
     ImageTransparency = 0.4,
     ZIndex = 11,
@@ -760,7 +760,7 @@ self._uiRefs.CustomBackground = BgImage
     Name = "ToggleIcon",
     Size = UDim2.fromOffset(34,34),
     BackgroundTransparency = 1,
-    Image = ResolveIcon(82539886579242) or "",
+    Image = ResolveIcon(70682112796440) or "",
     ImageColor3 = T.AccentBright,
     ZIndex = 13,
     Parent = ToggleBtn,
