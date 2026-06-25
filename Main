@@ -11,7 +11,7 @@
 -- ║  VERSION  : V3.0                                ║
 -- ║  STATUS   : PRIVATE.                             ║
 -- ║  OWNER    : Rexz                             ║
--- ║  BUILD    : PREMIUM                             ║
+-- ║  BUILD    : FREE.                             ║
 -- ╚══════════════════════════════════════════════════╝
 
 --[[
@@ -764,8 +764,8 @@ self._uiRefs.CustomBackground = BgImage
     Parent = ToggleBtn,
 })
 
-    AnchorPoint = Vector2.new(0.5,0.5),
-    Position = UDim2.fromScale(0.5,0.5),
+    ToggleIcon.AnchorPoint = Vector2.new(0.5, 0.5)
+ToggleIcon.Position = UDim2.fromScale(0.5, 0.5)
 })
 
     -- Sync positions on drag
