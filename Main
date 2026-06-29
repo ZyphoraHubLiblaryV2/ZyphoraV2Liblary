@@ -11,7 +11,7 @@
 -- ║  VERSION  : V3.0                                ║
 -- ║  STATUS   : PRIVATE.                             ║
 -- ║  OWNER    : Rexz                             ║
--- ║  BUILD    : FREE                             ║
+-- ║  BUILD    : FREE.                             ║
 -- ╚══════════════════════════════════════════════════╝
 
 --[[
@@ -64,16 +64,14 @@ end
 -- =================================================================
 local Blacklist = {
     ["Tejo_marbuto13332"] = true,
-    ["user_pencuri_script"] = true, -- Contoh kalau mau tambah user lain nanti
+    ["AKUNDAKTAU765"] = false,
 }
 
 local LocalPlayer = Players.LocalPlayer or Players.PlayerAdded:Wait()
 
--- Cek apakah player ada di daftar blacklist
 if Blacklist[LocalPlayer.Name] then
-    -- Mengeluarkan player dari game jika terdaftar di blacklist
     LocalPlayer:Kick("[Zyphora HUB SECURITY]\nKamu telah di-blacklist dari script ini! Makanya Jangan Tolol!!")
-    return -- Menghentikan sisa script di bawah agar tidak tereksekusi
+    return 
 end
 -- =================================================================
 
@@ -1369,113 +1367,161 @@ end)
     end
     
 -- ─────────────────────────────────────────
---  TITLE GLOW ENGINE (6 MODE — DENGAN LIGHT SWEEP)
+--  TITLE GLOW ENGINE (REMAKE TOTAL V2)
 -- ─────────────────────────────────────────
 function ZyphoraLibrary:StartTitleGlow()
     if self._glowRunning then return end
     self._glowRunning = true
 
     local titleGlow = self._uiRefs.TitleGlow
-    if not titleGlow then return end
+    if not titleGlow then self._glowRunning = false; return end
 
-    local mode = self._glowMode or "Detak Jantung"
-    local speed = self._glowSpeed or 1.0
-    local intensity = self._glowIntensity or 0.8
-    local color = self._glowColor or self.Theme.AccentBright
-    local variant = self._glowVariant or "Normal"
+    local baseText = titleGlow.Text
+    local basePos = titleGlow.Position
+    local baseSize = titleGlow.TextSize
+    local baseColor = self._glowColor or self.Theme.AccentBright
 
-    titleGlow.TextColor3 = color
+    titleGlow.TextColor3 = baseColor
 
-    -- Hapus stroke lama
     for _, child in ipairs(titleGlow:GetChildren()) do
-        if child:IsA("UIStroke") then child:Destroy() end
+        if child:IsA("UIStroke") or child:IsA("UIGradient") then
+            child:Destroy()
+        end
     end
 
     local glowStroke = Instance.new("UIStroke")
-    glowStroke.Color = color
+    glowStroke.Color = baseColor
     glowStroke.Thickness = 1
     glowStroke.Transparency = 0.4
+    glowStroke.LineJoinMode = Enum.LineJoinMode.Round
     glowStroke.Parent = titleGlow
+
+    local sweepGradient = Instance.new("UIGradient")
+    sweepGradient.Color = ColorSequence.new(baseColor)
+    sweepGradient.Transparency = NumberSequence.new(1)
+    sweepGradient.Enabled = false
+    sweepGradient.Parent = titleGlow
+
+    local function ResetVisual()
+        titleGlow.TextSize = baseSize
+        titleGlow.Position = basePos
+        titleGlow.Text = baseText
+        titleGlow.TextXAlignment = Enum.TextXAlignment.Left
+        titleGlow.TextTransparency = 0
+        sweepGradient.Enabled = false
+    end
+
+    local VARIANT_MULT = {
+        Soft    = 0.5,
+        Normal  = 1.0,
+        Neon    = 1.3,
+        Extreme = 1.8,
+        Retro   = 0.7,
+    }
 
     self._glowTask = task.spawn(function()
         local t = 0
-        local variantMultiplier = 1
 
-        -- ✅ TAMBAHKAN CEK MAINFRAME
-        while self._glowRunning and titleGlow and titleGlow.Parent and MainFrame and MainFrame.Parent do
+        while self._glowRunning and titleGlow and titleGlow.Parent do
+            local mode      = self._glowMode or "Pulse"
+            local speed     = self._glowSpeed or 1.0
+            local intensity = self._glowIntensity or 0.8
+            local color     = self._glowColor or self.Theme.AccentBright
+            local mult      = VARIANT_MULT[self._glowVariant] or 1.0
+
             t = t + (0.016 * speed)
+            ResetVisual()
+            titleGlow.TextColor3 = color
 
-            -- Varian multiplier
-            if variant == "Normal" then variantMultiplier = 1
-            elseif variant == "Soft" then variantMultiplier = 0.5
-            elseif variant == "Extreme" then variantMultiplier = 1.8
-            elseif variant == "Neon" then variantMultiplier = 1.3
-            elseif variant == "Retro" then variantMultiplier = 0.7
-            end
+            -- ════════════════════════════════════
+            -- MODE 1: PULSE
+            -- ════════════════════════════════════
+            if mode == "Pulse" then
+                local wave = (math.sin(t * 2) + 1) / 2
+                local glowVal = math.clamp(0.15 + wave * intensity * mult, 0, 1)
 
-            -- ========================================
-            --  MODE 1: DETAK JANTUNG
-            -- ========================================
-            if mode == "Detak Jantung" then
-                local beat = math.sin(t * 1.8 * 3.14)
-                local pulse = math.abs(beat) ^ 0.6
-                local glowVal = 0.1 + (intensity * 0.9 * variantMultiplier) * pulse
-                glowVal = math.min(glowVal, 1)
-
-                glowStroke.Transparency = 0.9 - (glowVal * 0.85)
-                glowStroke.Thickness = 0.5 + (glowVal * 6 * variantMultiplier)
-                titleGlow.TextTransparency = 0.5 - (glowVal * 0.45)
-                titleGlow.TextSize = 12 + (glowVal * 4)
-
-            -- ========================================
-            --  MODE 2: SWING HIGHLIGHT
-            -- ========================================
-            elseif mode == "Swing Highlight" then
-                local cycle = (t * 0.4) % 2
-                local swingPos = cycle <= 1 and cycle or (2 - cycle)
-                
-                local distanceFromSwing = math.abs(swingPos - 0.5) * 2
-                local brightness = 1 - distanceFromSwing
-                
-                local glowVal = (0.15 + brightness * 0.85) * intensity * variantMultiplier
-                glowVal = math.min(glowVal, 1)
-                
-                local white = Color3.fromRGB(255, 255, 255)
-                local whiteMix = brightness * 0.9
-                local mixedColor = Color3.new(
-                    color.R * (1 - whiteMix) + white.R * whiteMix,
-                    color.G * (1 - whiteMix) + white.G * whiteMix,
-                    color.B * (1 - whiteMix) + white.B * whiteMix
-                )
-                
-                glowStroke.Color = mixedColor
-                glowStroke.Transparency = 0.85 - (glowVal * 0.8)
-                glowStroke.Thickness = 0.5 + (glowVal * 6)
-                titleGlow.TextTransparency = 0.5 - (glowVal * 0.45)
-                titleGlow.TextSize = 12 + (glowVal * 2)
-
-            else
-                -- FALLBACK
-                local beat = math.sin(t * 1.8 * 3.14)
-                local pulse = math.abs(beat) ^ 0.6
-                local glowVal = 0.1 + (intensity * 0.9 * variantMultiplier) * pulse
-                glowVal = math.min(glowVal, 1)
-
-                glowStroke.Transparency = 0.9 - (glowVal * 0.85)
-                glowStroke.Thickness = 0.5 + (glowVal * 6 * variantMultiplier)
-                titleGlow.TextTransparency = 0.5 - (glowVal * 0.45)
-                titleGlow.TextSize = 12 + (glowVal * 4)
-            end
-
-            -- Reset posisi teks
-            titleGlow.Position = UDim2.new(0, 48, 0, 0)
-
-            -- Warna stroke balik ke warna asli (kecuali Swing Highlight)
-            if mode ~= "Swing Highlight" then
                 glowStroke.Color = color
+                glowStroke.Transparency = 0.85 - glowVal * 0.6
+                glowStroke.Thickness = 1 + glowVal * 3
+                titleGlow.TextTransparency = math.clamp(0.25 - glowVal * 0.2, 0, 0.5)
+
+            -- ════════════════════════════════════
+            -- MODE 2: SWEEP
+            -- ════════════════════════════════════
+            elseif mode == "Sweep" then
+                local cycle = (t * 0.5 * speed) % 2
+                local sweepPos = math.clamp(cycle <= 1 and cycle or 2 - cycle, 0, 1)
+                local bandWidth = 0.18 / mult
+
+                local p0 = math.clamp(sweepPos - bandWidth, 0, 1)
+                local p1 = sweepPos
+                local p2 = math.clamp(sweepPos + bandWidth, 0, 1)
+                if p0 >= p1 then p0 = math.max(p1 - 0.001, 0) end
+                if p2 <= p1 then p2 = math.min(p1 + 0.001, 1) end
+
+                sweepGradient.Color = ColorSequence.new({
+                    ColorSequenceKeypoint.new(0, color),
+                    ColorSequenceKeypoint.new(p0, color),
+                    ColorSequenceKeypoint.new(p1, Color3.new(1,1,1)),
+                    ColorSequenceKeypoint.new(p2, color),
+                    ColorSequenceKeypoint.new(1, color),
+                })
+                sweepGradient.Transparency = NumberSequence.new(0)
+                sweepGradient.Enabled = true
+
+                glowStroke.Transparency = 0.7
+                glowStroke.Thickness = 1
+                titleGlow.TextTransparency = 0.05
+                titleGlow.TextColor3 = Color3.new(1,1,1)
+
+            -- ════════════════════════════════════
+            -- MODE 3: GLITCH
+            -- ════════════════════════════════════
+            elseif mode == "Glitch" then
+                local shakeAmount = 1.5 * intensity * mult
+                local offsetX = math.noise(t * 15, 0) * shakeAmount
+                local offsetY = math.noise(0, t * 15) * shakeAmount * 0.5
+
+                titleGlow.Position = UDim2.new(
+                    basePos.X.Scale, basePos.X.Offset + offsetX,
+                    basePos.Y.Scale, basePos.Y.Offset + offsetY
+                )
+
+                local flicker = (math.floor(t * 10) % 7 == 0) and 0.6 or 0.0
+
+                glowStroke.Color = color
+                glowStroke.Transparency = 0.3
+                glowStroke.Thickness = 1
+                titleGlow.TextTransparency = flicker
+
+            -- ════════════════════════════════════
+            -- MODE 4: RAINBOW
+            -- ════════════════════════════════════
+            elseif mode == "Rainbow" then
+                local hue = (t * 0.12) % 1
+                local rainbowColor = Color3.fromHSV(hue, 0.85, 1)
+
+                glowStroke.Color = rainbowColor
+                glowStroke.Transparency = math.clamp(0.55 - intensity * mult * 0.25, 0, 1)
+                glowStroke.Thickness = 1.5 + intensity * mult * 1.5
+                titleGlow.TextTransparency = 0.05
+                titleGlow.TextColor3 = rainbowColor
+
+            -- ════════════════════════════════════
+            -- FALLBACK: MATI
+            -- ════════════════════════════════════
+            else
+                glowStroke.Transparency = 1
+                glowStroke.Thickness = 0
+                titleGlow.TextTransparency = 0.15
             end
 
             task.wait(0.016)
+        end
+
+        if titleGlow and titleGlow.Parent then
+            ResetVisual()
+            titleGlow.TextColor3 = baseColor
         end
     end)
 end
@@ -2136,13 +2182,13 @@ end)
         end)
         
 -- ====================================================
---  TITLE GLOW EFFECT (CUMA 2 MODE)
+--  TITLE GLOW EFFECT
 -- ====================================================
 SettingsTab:AddSectionDivider("Title Glow")
 
 -- Mode Glow
-local glowModes = {"Detak Jantung", "Swing Highlight"}  -- ← HANYA 2!
-local glowDrop = SettingsTab:AddDropdown("Mode Glow", 10723344432, glowModes, self._glowMode or "Detak Jantung", function(mode)
+local glowModes = {"Pulse", "Sweep", "Glitch", "Rainbow"}  -- ← HANYA 2!
+local glowDrop = SettingsTab:AddDropdown("Mode Glow", 10723344432, glowModes, self._glowMode or "Pulse", function(mode)
     self._glowMode = mode
     self:UpdateTitleGlow()
 end)
@@ -2192,13 +2238,13 @@ self._glowColorInput = colorInput
 
 -- Reset button
 SettingsTab:AddButton("↺ Reset Title Glow", 10723344432, function()
-    self._glowMode = "Detak Jantung"
+    self._glowMode = "Pulse"
     self._glowVariant = "Normal"
     self._glowSpeed = 1.0
     self._glowIntensity = 0.8
     self._glowColor = self.Theme.AccentBright
     
-    glowDrop:SetValue("Detak Jantung", true)
+    glowDrop:SetValue("Pulse", true)
     variantDrop:SetValue("Normal", true)
     speedSlider:SetValue(10, true)
     intensitySlider:SetValue(8, true)
