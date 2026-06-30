@@ -678,6 +678,7 @@ end)
 })
 Corner(BgImage, 12)
 self._uiRefs.CustomBackground = BgImage
+self._uiRefs._customBgActive = true  -- ✅ TAMBAH INI: background default aktif dari awal
 
     -- Gradient overlay (Merah -> Biru)
     local BgGradientOverlay = New("Frame", {
@@ -1171,48 +1172,51 @@ local function ToggleHideWindow()
         end)
 
     else
-        MainFrame.Visible = true
-        MainFrame.BackgroundTransparency = 1
+    MainFrame.Visible = true
+    MainFrame.BackgroundTransparency = 1
 
-        local target = self.Minimized
-            and UDim2.new(self.LastSize.X.Scale, self.LastSize.X.Offset, 0, 40)
-            or self.LastSize
+    local target = self.Minimized
+        and UDim2.new(self.LastSize.X.Scale, self.LastSize.X.Offset, 0, 40)
+        or self.LastSize
 
-        TSpring(MainFrame, {
-            BackgroundTransparency = 0,
-            Size = target
-        })
+    TSpring(MainFrame, {
+        BackgroundTransparency = 0,
+        Size = target
+    })
 
-        -- ✅ Tampilkan kembali setelah animasi selesai
-        task.delay(0.15, function()
-    if self._uiRefs.CustomBackground then
-        self._uiRefs.CustomBackground.Visible = true
-    end
-            if self._uiRefs.CustomBackgroundGradient then
-                -- Kembalikan ke state sebelumnya (jika gradient aktif)
-                local gradToggle = self._uiRefs._gradToggleState
-                self._uiRefs.CustomBackgroundGradient.Visible = gradToggle or false
+    task.delay(0.15, function()
+        -- ✅ FIX: cek state aktif yang tersimpan, bukan unconditional true
+        if self._uiRefs.CustomBackground then
+            self._uiRefs.CustomBackground.Visible = (self._uiRefs._customBgActive == true) and (not self.Minimized)
+        end
+        if self._uiRefs.CustomBackgroundGradient then
+            local gradToggle = self._uiRefs._gradToggleState
+            self._uiRefs.CustomBackgroundGradient.Visible = (gradToggle or false) and (not self.Minimized)
+        end
+        if ResizeHandle then
+            ResizeHandle.Visible = not self.Minimized
+        end
+        if FrameGlow then
+            FrameGlow.Visible = not self.Minimized
+        end
+
+        -- ✅ FIX: jangan paksa true, ikuti state Minimized
+        local showFull = not self.Minimized
+        if self._uiRefs.SidebarBg then self._uiRefs.SidebarBg.Visible = showFull end
+        if self._uiRefs.SidebarDiv then self._uiRefs.SidebarDiv.Visible = showFull end
+        if self.Sidebar then self.Sidebar.Visible = showFull end
+        if self._uiRefs.SearchBar then self._uiRefs.SearchBar.Visible = showFull end
+        if self.ContentHolder then self.ContentHolder.Visible = showFull end
+
+        for _, tab in ipairs(self.Tabs) do
+            if tab.Button then
+                tab.Button.Visible = showFull
             end
-            if ResizeHandle then
-                ResizeHandle.Visible = true
+            if tab.ScrollBox then
+                tab.ScrollBox.Visible = showFull and tab == self.CurrentTab
             end
-            if FrameGlow then
-                FrameGlow.Visible = true
-            end
-
-            if self._uiRefs.SidebarBg then self._uiRefs.SidebarBg.Visible = true end
-            if self._uiRefs.SidebarDiv then self._uiRefs.SidebarDiv.Visible = true end
-            if self.Sidebar then self.Sidebar.Visible = true end
-            if self._uiRefs.SearchBar then self._uiRefs.SearchBar.Visible = true end
-            if self.ContentHolder then self.ContentHolder.Visible = true end
-
-            for _, tab in ipairs(self.Tabs) do
-                if tab.Button then
-                    tab.Button.Visible = true
-                end
-            end
-        end)
-    end
+        end
+    end)
 end
     ToggleBtn.MouseButton1Click:Connect(ToggleHideWindow)
 
@@ -1433,7 +1437,7 @@ function ZyphoraLibrary:StartTitleGlow()
             ResetVisual()
             titleGlow.TextColor3 = color
 
-            -- ════════════════════════════════════
+           -- ════════════════════════════════════
             -- MODE 1: PULSE
             -- ════════════════════════════════════
             if mode == "Pulse" then
@@ -1441,14 +1445,16 @@ function ZyphoraLibrary:StartTitleGlow()
                 local glowVal = math.clamp(0.15 + wave * intensity * mult, 0, 1)
 
                 glowStroke.Color = color
-                glowStroke.Transparency = 0.85 - glowVal * 0.6
-                glowStroke.Thickness = 1 + glowVal * 3
+                glowStroke.Transparency = 0.85 - glowVal * 0.7
+                glowStroke.Thickness = 1 + glowVal * 6          -- ★ dibesarkan dari 3 → 6
+                titleGlow.TextSize = baseSize + glowVal * 4      -- ★ BARU: ukuran ikut membesar
                 titleGlow.TextTransparency = math.clamp(0.25 - glowVal * 0.2, 0, 0.5)
 
             -- ════════════════════════════════════
-            -- MODE 2: SWEEP
+            -- MODE 2: SWEEP (tetap sama, ini sudah benar/beda)
             -- ════════════════════════════════════
             elseif mode == "Sweep" then
+                -- (tidak diubah, sudah bekerja baik)
                 local cycle = (t * 0.5 * speed) % 2
                 local sweepPos = math.clamp(cycle <= 1 and cycle or 2 - cycle, 0, 1)
                 local bandWidth = 0.18 / mult
@@ -1475,37 +1481,50 @@ function ZyphoraLibrary:StartTitleGlow()
                 titleGlow.TextColor3 = Color3.new(1,1,1)
 
             -- ════════════════════════════════════
-            -- MODE 3: GLITCH
+            -- MODE 3: GLITCH — DIBESARKAN DRASTIS
             -- ════════════════════════════════════
             elseif mode == "Glitch" then
-                local shakeAmount = 1.5 * intensity * mult
+                local shakeAmount = 6 * intensity * mult        -- ★ dari 1.5 → 6 (4x lebih besar)
                 local offsetX = math.noise(t * 15, 0) * shakeAmount
-                local offsetY = math.noise(0, t * 15) * shakeAmount * 0.5
+                local offsetY = math.noise(0, t * 15) * shakeAmount
 
                 titleGlow.Position = UDim2.new(
                     basePos.X.Scale, basePos.X.Offset + offsetX,
                     basePos.Y.Scale, basePos.Y.Offset + offsetY
                 )
 
-                local flicker = (math.floor(t * 10) % 7 == 0) and 0.6 or 0.0
+                local flicker = (math.floor(t * 12) % 4 == 0) and 0.7 or 0.0  -- ★ flicker lebih sering & lebih kontras
 
                 glowStroke.Color = color
                 glowStroke.Transparency = 0.3
-                glowStroke.Thickness = 1
+                glowStroke.Thickness = 2
                 titleGlow.TextTransparency = flicker
 
+                -- ★ BARU: kadang teks split warna RGB (efek glitch khas)
+                if math.floor(t * 8) % 5 == 0 then
+                    titleGlow.TextColor3 = Color3.fromRGB(255, 50, 50)
+                else
+                    titleGlow.TextColor3 = color
+                end
+
             -- ════════════════════════════════════
-            -- MODE 4: RAINBOW
+            -- MODE 4: RAINBOW — DIPERCEPAT DRASTIS
             -- ════════════════════════════════════
             elseif mode == "Rainbow" then
-                local hue = (t * 0.12) % 1
-                local rainbowColor = Color3.fromHSV(hue, 0.85, 1)
+                local hue = (t * 0.5 * speed) % 1               -- ★ dari 0.12 → 0.5 (4x lebih cepat)
+                local rainbowColor = Color3.fromHSV(hue, 1, 1)   -- ★ saturation dari 0.85 → 1 (lebih jenuh/terang)
 
                 glowStroke.Color = rainbowColor
-                glowStroke.Transparency = math.clamp(0.55 - intensity * mult * 0.25, 0, 1)
-                glowStroke.Thickness = 1.5 + intensity * mult * 1.5
+                glowStroke.Transparency = 0.3                     -- ★ lebih solid, dari ~0.4 → 0.3
+                glowStroke.Thickness = 3 + intensity * mult * 2   -- ★ lebih tebal
                 titleGlow.TextTransparency = 0.05
                 titleGlow.TextColor3 = rainbowColor
+
+            else
+                glowStroke.Transparency = 1
+                glowStroke.Thickness = 0
+                titleGlow.TextTransparency = 0.15
+            end
 
             -- ════════════════════════════════════
             -- FALLBACK: MATI
@@ -1670,13 +1689,32 @@ if InfoTab.Button then
 end
 
 -- ================================
---  INFO TAB - ZYPHORA STYLE
+--  INFO TAB - REMAKE
 -- ================================
 
--- Constants
 local HERO_HEIGHT = 72
 local PADDING = 4
 local CARD_RADIUS = 10
+
+-- ====== EDIT DATA DI SINI ======
+local changelogData = {
+    { version = "V3.0", date = "2026-06", notes = "Full redesign UI, tambah Title Glow, Profile Manager." },
+    { version = "V2.5", date = "2026-03", notes = "Tambah custom background, gradient overlay." },
+    { version = "V2.0", date = "2026-01", notes = "Rewrite ulang struktur tab & sidebar." },
+}
+
+local creditsData = {
+    { name = "Rexz", role = "Owner / Developer", color = nil }, -- color = nil => pakai Accent
+    { name = "Contributor 1", role = "UI Design", color = nil },
+    { name = "Contributor 2", role = "Tester", color = nil },
+}
+
+local socialLinks = {
+    { label = "Discord",   color = Color3.fromRGB(88, 101, 242), link = "discord.gg/zyphora" },
+    { label = "WhatsApp",  color = Color3.fromRGB(60, 200, 120), link = "https://whatsapp.com/channel/0029Vb8PZy4HwXbBtQmAJ73m" },
+    { label = "YouTube",   color = Color3.fromRGB(255, 70, 70),  link = "youtube.com/@zyphora" },
+}
+-- ====== END DATA ======
 
 -- Hero Banner
 local Hero = New("Frame", {
@@ -1689,14 +1727,12 @@ local Hero = New("Frame", {
 })
 Corner(Hero, CARD_RADIUS)
 Stroke(Hero, T.Border, 1)
-
 Gradient(Hero, {
     Color3.fromRGB(60, 30, 130),
     Color3.fromRGB(20, 16, 48),
     Color3.fromRGB(10, 8, 20),
 }, 115)
 
--- Accent line
 local HeroAccent = New("Frame", {
     Size = UDim2.new(0, 3, 1, -20),
     Position = UDim2.new(0, 0, 0, 10),
@@ -1730,7 +1766,6 @@ New("TextLabel", {
     Parent = Hero,
 })
 
--- Version pill
 local VerPill = New("Frame", {
     Size = UDim2.new(0, 48, 0, 20),
     Position = UDim2.new(1, -56, 0.5, -10),
@@ -1739,7 +1774,6 @@ local VerPill = New("Frame", {
     Parent = Hero,
 })
 Corner(VerPill, 6)
-
 New("TextLabel", {
     Size = UDim2.new(1, 0, 1, 0),
     BackgroundTransparency = 1,
@@ -1751,33 +1785,27 @@ New("TextLabel", {
     Parent = VerPill,
 })
 
--- ================================
---  SECTION HELPER
--- ================================
+-- Section Helper
 local function InfoSection(label)
     local Wrap = New("Frame", {
         Size = UDim2.new(1, -PADDING, 0, 18),
         BackgroundTransparency = 1,
         Parent = InfoTab.ScrollBox,
     })
-
-    local Line = New("Frame", {
+    New("Frame", {
         Size = UDim2.new(1, 0, 0, 1),
         Position = UDim2.new(0, 0, 0.5, 0),
         BackgroundColor3 = T.Border,
         BorderSizePixel = 0,
         Parent = Wrap,
     })
-
     local Chip = New("Frame", {
         Size = UDim2.new(0, 0, 1, 0),
         AutomaticSize = Enum.AutomaticSize.X,
-        Position = UDim2.new(0, 0, 0, 0),
         BackgroundColor3 = T.BGTertiary,
         BorderSizePixel = 0,
         Parent = Wrap,
     })
-
     New("TextLabel", {
         Size = UDim2.new(0, 0, 1, 0),
         AutomaticSize = Enum.AutomaticSize.X,
@@ -1790,21 +1818,17 @@ local function InfoSection(label)
     })
 end
 
--- ================================
---  CARD HELPER
--- ================================
-local function CreateCard(parent, accentColor)
+-- Card Helper
+local function CreateCard(parent, h, accentColor)
     accentColor = accentColor or T.Accent
-
     local Card = New("Frame", {
-        Size = UDim2.new(1, -PADDING, 0, 64),
+        Size = UDim2.new(1, -PADDING, 0, h or 64),
         BackgroundColor3 = T.Surface,
         BorderSizePixel = 0,
         Parent = parent,
     })
     Corner(Card, CARD_RADIUS)
     Stroke(Card, T.Border, 1)
-
     local Accent = New("Frame", {
         Size = UDim2.new(0, 3, 1, -20),
         Position = UDim2.new(0, 0, 0, 10),
@@ -1813,53 +1837,19 @@ local function CreateCard(parent, accentColor)
         Parent = Card,
     })
     Corner(Accent, 2)
-
     return Card
 end
 
 -- ================================
---  ABOUT SECTION
+--  STATS SECTION (DIPERTAHANKAN)
 -- ================================
-InfoSection("About")
-
-local AboutCard = CreateCard(InfoTab.ScrollBox)
-
-New("TextLabel", {
-    Size = UDim2.new(1, -20, 0, 20),
-    Position = UDim2.new(0, 16, 0, 8),
-    BackgroundTransparency = 1,
-    Text = "About This Script",
-    TextColor3 = T.Text,
-    TextSize = 13,
-    Font = Enum.Font.GothamBold,
-    TextXAlignment = Enum.TextXAlignment.Left,
-    Parent = AboutCard,
-})
-
-New("TextLabel", {
-    Size = UDim2.new(1, -20, 0, 28),
-    Position = UDim2.new(0, 16, 0, 32),
-    BackgroundTransparency = 1,
-    Text = "Script hub with complete features for various games. Designed for performance and ease of use.",
-    TextColor3 = T.TextDim,
-    TextSize = 10,
-    Font = Enum.Font.Gotham,
-    TextXAlignment = Enum.TextXAlignment.Left,
-    TextWrapped = true,
-    Parent = AboutCard,
-})
-
--- ================================
---  DETAILS SECTION
--- ================================
-InfoSection("Details")
+InfoSection("Stats")
 
 local StatsRow = New("Frame", {
     Size = UDim2.new(1, -PADDING, 0, 48),
     BackgroundTransparency = 1,
     Parent = InfoTab.ScrollBox,
 })
-
 New("UIListLayout", {
     FillDirection = Enum.FillDirection.Horizontal,
     Padding = UDim.new(0, 4),
@@ -1894,7 +1884,6 @@ for _, s in ipairs(stats) do
         TextXAlignment = Enum.TextXAlignment.Left,
         Parent = Card,
     })
-
     New("TextLabel", {
         Size = UDim2.new(1, -10, 0, 12),
         Position = UDim2.new(0, 8, 1, -16),
@@ -1907,148 +1896,156 @@ for _, s in ipairs(stats) do
         Parent = Card,
     })
 
-    -- Live player count update
     if s.label == "Players" then
-        local function updateCount()
-            Val.Text = tostring(#game.Players:GetPlayers())
-        end
+        local function updateCount() Val.Text = tostring(#game.Players:GetPlayers()) end
         game.Players.PlayerAdded:Connect(updateCount)
         game.Players.PlayerRemoving:Connect(updateCount)
     end
 end
 
 -- ================================
---  FEATURES SECTION
+--  CHANGELOG SECTION
 -- ================================
-InfoSection("Features")
+InfoSection("Changelog")
 
-local FeatureGrid = New("Frame", {
-    Size = UDim2.new(1, -PADDING, 0, 120),
-    BackgroundTransparency = 1,
-    Parent = InfoTab.ScrollBox,
-})
-
-New("UIListLayout", {
-    FillDirection = Enum.FillDirection.Horizontal,
-    Wrap = true,
-    Padding = UDim.new(0, 4),
-    Parent = FeatureGrid,
-})
-
-local FSize = UDim2.new(1/2, -2, 0, 52)
-
-local features = {
-    { name = "Performance",  desc = "Optimized scripts" },
-    { name = "UI Modern",    desc = "Zyphora design" },
-    { name = "Safe",         desc = "Anti-ban protection" },
-    { name = "Auto Update",  desc = "Latest features" },
-}
-
-for _, f in ipairs(features) do
-    local Card = New("Frame", {
-        Size = FSize,
-        BackgroundColor3 = T.Surface,
-        BorderSizePixel = 0,
-        Parent = FeatureGrid,
-    })
-    Corner(Card, 8)
-    Stroke(Card, T.Border, 1)
-
-    local Dot = New("Frame", {
-        Size = UDim2.new(0, 8, 0, 8),
-        Position = UDim2.new(0, 12, 0, 10),
-        BackgroundColor3 = T.Accent,
-        BorderSizePixel = 0,
-        Parent = Card,
-    })
-    Corner(Dot, 50)
+for i, log in ipairs(changelogData) do
+    local LogCard = CreateCard(InfoTab.ScrollBox, 56, i == 1 and T.AccentBright or T.Border)
 
     New("TextLabel", {
-        Size = UDim2.new(1, -28, 0, 16),
-        Position = UDim2.new(0, 26, 0, 6),
+        Size = UDim2.new(0, 60, 0, 18),
+        Position = UDim2.new(0, 16, 0, 8),
         BackgroundTransparency = 1,
-        Text = f.name,
-        TextColor3 = T.Text,
-        TextSize = 11,
+        Text = log.version,
+        TextColor3 = i == 1 and T.AccentBright or T.Text,
+        TextSize = 12,
         Font = Enum.Font.GothamBold,
         TextXAlignment = Enum.TextXAlignment.Left,
-        Parent = Card,
+        Parent = LogCard,
     })
 
     New("TextLabel", {
-        Size = UDim2.new(1, -28, 0, 14),
-        Position = UDim2.new(0, 26, 0, 26),
+        Size = UDim2.new(0, 80, 0, 18),
+        Position = UDim2.new(1, -90, 0, 8),
         BackgroundTransparency = 1,
-        Text = f.desc,
+        Text = log.date,
         TextColor3 = T.TextMuted,
         TextSize = 9,
+        Font = Enum.Font.GothamMedium,
+        TextXAlignment = Enum.TextXAlignment.Right,
+        Parent = LogCard,
+    })
+
+    New("TextLabel", {
+        Size = UDim2.new(1, -32, 0, 28),
+        Position = UDim2.new(0, 16, 0, 26),
+        BackgroundTransparency = 1,
+        Text = log.notes,
+        TextColor3 = T.TextDim,
+        TextSize = 10,
         Font = Enum.Font.Gotham,
         TextXAlignment = Enum.TextXAlignment.Left,
-        Parent = Card,
+        TextWrapped = true,
+        Parent = LogCard,
     })
 end
 
 -- ================================
---  QUICK ACTIONS SECTION
+--  CREDITS SECTION
 -- ================================
-InfoSection("Quick Actions")
+InfoSection("Credits")
 
-local ActionRow = New("Frame", {
+for _, person in ipairs(creditsData) do
+    local CreditCard = CreateCard(InfoTab.ScrollBox, 48, person.color or T.Accent)
+
+    -- Avatar dot/initial
+    local Avatar = New("Frame", {
+        Size = UDim2.new(0, 30, 0, 30),
+        Position = UDim2.new(0, 14, 0.5, -15),
+        BackgroundColor3 = person.color or T.Accent,
+        BackgroundTransparency = 0.7,
+        BorderSizePixel = 0,
+        Parent = CreditCard,
+    })
+    Corner(Avatar, 8)
+    New("TextLabel", {
+        Size = UDim2.new(1, 0, 1, 0),
+        BackgroundTransparency = 1,
+        Text = string.sub(person.name, 1, 1):upper(),
+        TextColor3 = person.color or T.AccentBright,
+        TextSize = 14,
+        Font = Enum.Font.GothamBlack,
+        TextXAlignment = Enum.TextXAlignment.Center,
+        Parent = Avatar,
+    })
+
+    New("TextLabel", {
+        Size = UDim2.new(1, -110, 0, 18),
+        Position = UDim2.new(0, 52, 0, 8),
+        BackgroundTransparency = 1,
+        Text = person.name,
+        TextColor3 = T.Text,
+        TextSize = 12,
+        Font = Enum.Font.GothamBold,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        Parent = CreditCard,
+    })
+    New("TextLabel", {
+        Size = UDim2.new(1, -110, 0, 14),
+        Position = UDim2.new(0, 52, 0, 26),
+        BackgroundTransparency = 1,
+        Text = person.role,
+        TextColor3 = T.TextMuted,
+        TextSize = 9,
+        Font = Enum.Font.GothamMedium,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        Parent = CreditCard,
+    })
+end
+
+-- ================================
+--  SOCIAL LINKS SECTION
+-- ================================
+InfoSection("Social Links")
+
+local SocialRow = New("Frame", {
     Size = UDim2.new(1, -PADDING, 0, 32),
     BackgroundTransparency = 1,
     Parent = InfoTab.ScrollBox,
 })
-
 New("UIListLayout", {
     FillDirection = Enum.FillDirection.Horizontal,
     Padding = UDim.new(0, 4),
-    Parent = ActionRow,
+    Parent = SocialRow,
 })
 
-local actions = {
-    { label = "Copy ID",   color = T.AccentBright, copy = "124560466474914" },
-    { label = "Discord",   color = Color3.fromRGB(88, 101, 242), copy = "discord.gg/zyphora" },
-    { label = "Changelog", color = T.Warning, copy = "V3.0 - Full redesign" },
-}
-
-for _, act in ipairs(actions) do
-    local ABtn = New("TextButton", {
-        Size = UDim2.new(1/3, -3, 1, 0),
+for _, sl in ipairs(socialLinks) do
+    local SBtn = New("TextButton", {
+        Size = UDim2.new(1/#socialLinks, -3, 1, 0),
         BackgroundColor3 = T.Surface,
-        Text = act.label,
-        TextColor3 = act.color,
+        Text = sl.label,
+        TextColor3 = sl.color,
         TextSize = 10,
         Font = Enum.Font.GothamBold,
         BorderSizePixel = 0,
-        Parent = ActionRow,
+        Parent = SocialRow,
     })
-    Corner(ABtn, 7)
-    Stroke(ABtn, act.color, 1, 0.3)
+    Corner(SBtn, 7)
+    Stroke(SBtn, sl.color, 1, 0.3)
 
-    ABtn.MouseEnter:Connect(function()
-        TFast(ABtn, {
-            BackgroundColor3 = act.color,
-            TextColor3 = Color3.fromRGB(255, 255, 255)
-        })
+    SBtn.MouseEnter:Connect(function()
+        TFast(SBtn, { BackgroundColor3 = sl.color, TextColor3 = Color3.fromRGB(255,255,255) })
     end)
-
-    ABtn.MouseLeave:Connect(function()
-        TFast(ABtn, {
-            BackgroundColor3 = T.Surface,
-            TextColor3 = act.color
-        })
+    SBtn.MouseLeave:Connect(function()
+        TFast(SBtn, { BackgroundColor3 = T.Surface, TextColor3 = sl.color })
     end)
-
-    ABtn.MouseButton1Click:Connect(function()
-        if setclipboard then
-            setclipboard(act.copy)
-        end
-        self:Notify("Info", act.label .. " copied!", "success")
+    SBtn.MouseButton1Click:Connect(function()
+        if setclipboard then setclipboard(sl.link) end
+        self:Notify("Social", sl.label .. " link disalin!", "success")
     end)
 end
 
 -- ================================
---  FOOTER
+--  FOOTER (DIPERTAHANKAN)
 -- ================================
 local Footer = New("Frame", {
     Size = UDim2.new(1, -PADDING, 0, 26),
@@ -2057,7 +2054,6 @@ local Footer = New("Frame", {
     Parent = InfoTab.ScrollBox,
 })
 Corner(Footer, 7)
-
 New("TextLabel", {
     Size = UDim2.new(1, -12, 1, 0),
     Position = UDim2.new(0, 6, 0, 0),
@@ -2149,6 +2145,7 @@ New("TextLabel", {
     local img = ParseImageLink(link)
     if not img or img == "" then
         if self._uiRefs.CustomBackground then self._uiRefs.CustomBackground.Visible = false end
+        self._uiRefs._customBgActive = false  -- ✅ TAMBAH INI
         self:Notify("Background", "Background custom dihapus.", "info")
         return
     end
@@ -2156,6 +2153,7 @@ New("TextLabel", {
         self._uiRefs.CustomBackground.Image = img
         self._uiRefs.CustomBackground.Visible = true
     end
+    self._uiRefs._customBgActive = true  -- ✅ TAMBAH INI
     self:Notify("Background", "Background custom diterapkan.", "success")
 end)
 
@@ -2171,6 +2169,7 @@ end)
     if self._uiRefs.CustomBackground then self._uiRefs.CustomBackground.Visible = false end
     if self._uiRefs.CustomBackgroundGradient then self._uiRefs.CustomBackgroundGradient.Visible = false end
     if gradToggle and gradToggle.SetValue then gradToggle:SetValue(false) end
+    self._uiRefs._customBgActive = false  -- ✅ TAMBAH INI
     self:Notify("Background", "Background direset.", "success")
 end)
 
