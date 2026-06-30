@@ -1172,51 +1172,48 @@ local function ToggleHideWindow()
         end)
 
     else
-    MainFrame.Visible = true
-    MainFrame.BackgroundTransparency = 1
+        MainFrame.Visible = true
+        MainFrame.BackgroundTransparency = 1
 
-    local target = self.Minimized
-        and UDim2.new(self.LastSize.X.Scale, self.LastSize.X.Offset, 0, 40)
-        or self.LastSize
+        local target = self.Minimized
+            and UDim2.new(self.LastSize.X.Scale, self.LastSize.X.Offset, 0, 40)
+            or self.LastSize
 
-    TSpring(MainFrame, {
-        BackgroundTransparency = 0,
-        Size = target
-    })
+        TSpring(MainFrame, {
+            BackgroundTransparency = 0,
+            Size = target
+        })
 
-    task.delay(0.15, function()
-        -- ✅ FIX: cek state aktif yang tersimpan, bukan unconditional true
-        if self._uiRefs.CustomBackground then
-            self._uiRefs.CustomBackground.Visible = (self._uiRefs._customBgActive == true) and (not self.Minimized)
-        end
-        if self._uiRefs.CustomBackgroundGradient then
-            local gradToggle = self._uiRefs._gradToggleState
-            self._uiRefs.CustomBackgroundGradient.Visible = (gradToggle or false) and (not self.Minimized)
-        end
-        if ResizeHandle then
-            ResizeHandle.Visible = not self.Minimized
-        end
-        if FrameGlow then
-            FrameGlow.Visible = not self.Minimized
-        end
-
-        -- ✅ FIX: jangan paksa true, ikuti state Minimized
-        local showFull = not self.Minimized
-        if self._uiRefs.SidebarBg then self._uiRefs.SidebarBg.Visible = showFull end
-        if self._uiRefs.SidebarDiv then self._uiRefs.SidebarDiv.Visible = showFull end
-        if self.Sidebar then self.Sidebar.Visible = showFull end
-        if self._uiRefs.SearchBar then self._uiRefs.SearchBar.Visible = showFull end
-        if self.ContentHolder then self.ContentHolder.Visible = showFull end
-
-        for _, tab in ipairs(self.Tabs) do
-            if tab.Button then
-                tab.Button.Visible = showFull
+        -- ✅ Tampilkan kembali setelah animasi selesai
+        task.delay(0.15, function()
+    if self._uiRefs.CustomBackground then
+        self._uiRefs.CustomBackground.Visible = true
+    end
+            if self._uiRefs.CustomBackgroundGradient then
+                -- Kembalikan ke state sebelumnya (jika gradient aktif)
+                local gradToggle = self._uiRefs._gradToggleState
+                self._uiRefs.CustomBackgroundGradient.Visible = gradToggle or false
             end
-            if tab.ScrollBox then
-                tab.ScrollBox.Visible = showFull and tab == self.CurrentTab
+            if ResizeHandle then
+                ResizeHandle.Visible = true
             end
-        end
-    end)
+            if FrameGlow then
+                FrameGlow.Visible = true
+            end
+
+            if self._uiRefs.SidebarBg then self._uiRefs.SidebarBg.Visible = true end
+            if self._uiRefs.SidebarDiv then self._uiRefs.SidebarDiv.Visible = true end
+            if self.Sidebar then self.Sidebar.Visible = true end
+            if self._uiRefs.SearchBar then self._uiRefs.SearchBar.Visible = true end
+            if self.ContentHolder then self.ContentHolder.Visible = true end
+
+            for _, tab in ipairs(self.Tabs) do
+                if tab.Button then
+                    tab.Button.Visible = true
+                end
+            end
+        end)
+    end
 end
     ToggleBtn.MouseButton1Click:Connect(ToggleHideWindow)
 
@@ -2139,7 +2136,6 @@ New("TextLabel", {
     local img = ParseImageLink(link)
     if not img or img == "" then
         if self._uiRefs.CustomBackground then self._uiRefs.CustomBackground.Visible = false end
-        self._uiRefs._customBgActive = false  -- ✅ TAMBAH INI
         self:Notify("Background", "Background custom dihapus.", "info")
         return
     end
@@ -2147,7 +2143,6 @@ New("TextLabel", {
         self._uiRefs.CustomBackground.Image = img
         self._uiRefs.CustomBackground.Visible = true
     end
-    self._uiRefs._customBgActive = true  -- ✅ TAMBAH INI
     self:Notify("Background", "Background custom diterapkan.", "success")
 end)
 
@@ -2163,7 +2158,6 @@ end)
     if self._uiRefs.CustomBackground then self._uiRefs.CustomBackground.Visible = false end
     if self._uiRefs.CustomBackgroundGradient then self._uiRefs.CustomBackgroundGradient.Visible = false end
     if gradToggle and gradToggle.SetValue then gradToggle:SetValue(false) end
-    self._uiRefs._customBgActive = false  -- ✅ TAMBAH INI
     self:Notify("Background", "Background direset.", "success")
 end)
 
