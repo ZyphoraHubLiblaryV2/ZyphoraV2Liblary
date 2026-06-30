@@ -1520,12 +1520,6 @@ function ZyphoraLibrary:StartTitleGlow()
                 titleGlow.TextTransparency = 0.05
                 titleGlow.TextColor3 = rainbowColor
 
-            else
-                glowStroke.Transparency = 1
-                glowStroke.Thickness = 0
-                titleGlow.TextTransparency = 0.15
-            end
-
             -- ════════════════════════════════════
             -- FALLBACK: MATI
             -- ════════════════════════════════════
